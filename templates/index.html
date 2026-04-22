@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Habit Tracker</title>
+</head>
+<body>
+    <h1>My Habits</h1>
+
+    {% for habit in habits %}
+        <p>
+            {{ habit["name"] }} — Streak: {{ habit["streak"] }}
+            <form action="/complete/{{ habit['id'] }}" method="POST">
+                <button type="submit">✅ Done</button>
+            </form>
+            <form action="/delete/{{ habit['id'] }}" method="POST">
+                <button type="submit">❌ Delete</button>
+            </form>
+        </p>
+    {% endfor %}
+
+    <h2>Add a Habit</h2>
+    <form action="/create" method="POST">
+        <input type="text" name="habit_name" placeholder="Enter habit name">
+        <button type="submit">Add Habit</button>
+    </form>
+
+
+    
+</body>
+</html>
