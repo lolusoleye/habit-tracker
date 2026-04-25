@@ -26,8 +26,9 @@ def home():
         return redirect(url_for("login"))
     conn = get_db()
     habits = conn.execute("SELECT * FROM habits WHERE user_id = ?", (session["user_id"],)).fetchall()
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)).fetchone()
     conn.close()
-    return render_template("index.html", habits=habits)
+    return render_template("index.html", habits=habits, user=user)
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():

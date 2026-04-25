@@ -5,7 +5,13 @@
 </head>
 <body>
     <a href="/logout">Logout</a>
-    <a href="/upgrade">Upgrade to Pro</a>
+    <p>Logged in as: {{ user["email"] }}</p>
+    {% if user["is_pro"] %}
+    <p>Plan: Pro ✅</p>
+{% else %}
+    <p>Plan: Free (3 habit limit)</p>
+    <a href="/upgrade">Upgrade to Pro — £5/month</a>
+{% endif %}
     <h1>My Habits</h1>
 
     {% for habit in habits %}
