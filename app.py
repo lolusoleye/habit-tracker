@@ -24,6 +24,10 @@ def signup():
         email = request.form["email"]
         password = generate_password_hash(request.form["password"])
         conn = get_db()
+        existing_user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        if existing_user:
+            conn.close()
+            return "An account with that email already exists"
         conn.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, password))
         conn.commit()
         conn.close()
