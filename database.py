@@ -11,7 +11,9 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            is_pro INTEGER DEFAULT 0,
+            stripe_customer_id TEXT
         )
     """)
     conn.execute("""

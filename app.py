@@ -2,9 +2,20 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from database import get_db, init_db
 from datetime import date
 from werkzeug.security import generate_password_hash, check_password_hash
+import stripe
+import os
+from dotenv import load_dotenv
 
-app = Flask(__name__)
-app.secret_key = "changethislater"
+
+load_dotenv()
+
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
+STRIPE_PRICE_ID = os.getenv("STRIPE_PRICE_ID")
+
+app = Flask(__name__)   
+app.secret_key = os.getenv("SECRET_KEY")
+
 
 with app.app_context():
     init_db()
@@ -53,17 +64,6 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-@app.route("/create", methods=["POST"])
-def create():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-    habit_name = request.form["habit_name"]
-    conn = get_db()
-    conn.execute("INSERT INTO habits (name, user_id) VALUES (?, ?)", (habit_name, session["user_id"]))
-    conn.commit()
-    conn.close()
-    return redirect(url_for("home"))
-
 @app.route("/complete/<int:habit_id>", methods=["POST"])
 def complete(habit_id):
     conn = get_db()
@@ -88,6 +88,46 @@ def complete(habit_id):
 def delete(habit_id):
     conn = get_db()
     conn.execute("DELETE FROM habits WHERE id = ?", (habit_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("home"))
+
+
+@app.route("/upgrade")
+def upgrade():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    checkout_session = stripe.checkout.Session.create(
+        payment_method_types=["card"],
+        line_items=[{"price": STRIPE_PRICE_ID, "quantity": 1}],
+        mode="subscription",
+        success_url=url_for("upgrade_success", _external=True),
+        cancel_url=url_for("home", _external=True),
+    )
+    return redirect(checkout_session.url)
+
+@app.route("/upgrade/success")
+def upgrade_success():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    conn = get_db()
+    conn.execute("UPDATE users SET is_pro = 1 WHERE id = ?", (session["user_id"],))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("home"))
+
+@app.route("/create", methods=["POST"])
+def create():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)).fetchone()
+    habits = conn.execute("SELECT * FROM habits WHERE user_id = ?", (session["user_id"],)).fetchall()
+    if not user["is_pro"] and len(habits) >= 3:
+        conn.close()
+        return "Upgrade to Pro to add more habits"
+    habit_name = request.form["habit_name"]
+    conn.execute("INSERT INTO habits (name, user_id) VALUES (?, ?)", (habit_name, session["user_id"]))
     conn.commit()
     conn.close()
     return redirect(url_for("home"))
