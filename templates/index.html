@@ -51,12 +51,15 @@
             </div>
         </div>
 
-        {% if not user["is_pro"] %}
-            <div class="mb-4" style="font-size:0.9rem; color:#6e6e73;">
-                Free plan — <a href="/upgrade" style="color:#1d1d1f;">upgrade to Pro</a> for unlimited habits.
-            </div>
-        {% endif %}
-
+        {% if user["is_pro"] %}
+    <div class="mb-4" style="font-size:0.9rem; color:#1d7c1d;">
+        Pro plan    
+    </div>
+{% else %}
+    <div class="mb-4" style="font-size:0.9rem; color:#6e6e73;">
+        Free plan — <a href="/upgrade" style="color:#1d1d1f;">upgrade to Pro</a> for unlimited habits.
+    </div>
+{% endif %}
         {% if error %}
             <div class="mb-4" style="font-size:0.9rem; color:#c00;">{{ error }}</div>
         {% endif %}

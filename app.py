@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session,flash
+from authlib.integrations.flask_client import OAuth
 from database import get_db, init_db
 from datetime import date
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -20,6 +21,14 @@ app.secret_key = os.getenv("SECRET_KEY")
 with app.app_context():
     init_db()
 
+oauth = OAuth(app)
+google = oauth.register(
+    name="google",
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email"}
+)
 @app.route("/")
 def home():
     if "user_id" not in session:
@@ -30,6 +39,27 @@ def home():
     user = conn.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)).fetchone()
     conn.close()
     return render_template("index.html", habits=habits, user=user, error=error)
+
+@app.route("/login/google")
+def google_login():
+    redirect_uri = url_for("google_callback", _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+
+@app.route("/login/google/callback")
+def google_callback():
+    token = google.authorize_access_token()
+    user_info = token["userinfo"]
+    email = user_info["email"]
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    if not user:
+        conn.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, ""))
+        conn.commit()
+        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    session["user_id"] = user["id"]
+    conn.close()
+    return redirect(url_for("home"))
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
