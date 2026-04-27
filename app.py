@@ -24,11 +24,12 @@ with app.app_context():
 def home():
     if "user_id" not in session:
         return redirect(url_for("login"))
+    error = request.args.get("error")
     conn = get_db()
     habits = conn.execute("SELECT * FROM habits WHERE user_id = ?", (session["user_id"],)).fetchall()
     user = conn.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)).fetchone()
     conn.close()
-    return render_template("index.html", habits=habits, user=user)
+    return render_template("index.html", habits=habits, user=user, error=error)
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -126,7 +127,7 @@ def create():
     habits = conn.execute("SELECT * FROM habits WHERE user_id = ?", (session["user_id"],)).fetchall()
     if not user["is_pro"] and len(habits) >= 3:
         conn.close()
-        return "Upgrade to Pro to add more habits"
+        return redirect(url_for("home", error="You've reached the 3 habit limit. Upgrade to Pro for unlimited habits."))
     habit_name = request.form["habit_name"]
     conn.execute("INSERT INTO habits (name, user_id) VALUES (?, ?)", (habit_name, session["user_id"]))
     conn.commit()

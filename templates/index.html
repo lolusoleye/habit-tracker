@@ -2,37 +2,88 @@
 <html>
 <head>
     <title>Habit Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #1d1d1f;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        .btn-primary {
+            background-color: #1d1d1f;
+            border-color: #1d1d1f;
+            border-radius: 20px;
+            padding: 6px 20px;
+        }
+        .btn-primary:hover {
+            background-color: #3d3d3f;
+            border-color: #3d3d3f;
+        }
+        .btn-outline-dark {
+            border-radius: 20px;
+            padding: 4px 16px;
+        }
+        .habit-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            background: #fff;
+        }
+        .streak {
+            font-size: 0.85rem;
+            color: #6e6e73;
+        }
+        .top-bar {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 16px 0;
+            margin-bottom: 40px;
+        }
+    </style>
 </head>
 <body>
-    <a href="/logout">Logout</a>
-    <p>Logged in as: {{ user["email"] }}</p>
-    {% if user["is_pro"] %}
-    <p>Plan: Pro ✅</p>
-{% else %}
-    <p>Plan: Free (3 habit limit)</p>
-    <a href="/upgrade">Upgrade to Pro — £5/month</a>
-{% endif %}
-    <h1>My Habits</h1>
+    <div class="container" style="max-width: 640px;">
+        <div class="top-bar d-flex justify-content-between align-items-center">
+            <strong>Habit Tracker</strong>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted" style="font-size:0.9rem;">{{ user["email"] }}</span>
+                <a href="/logout" class="btn btn-outline-dark btn-sm">Log out</a>
+            </div>
+        </div>
 
-    {% for habit in habits %}
-        <p>
-            {{ habit["name"] }} — Streak: {{ habit["streak"] }}
-            <form action="/complete/{{ habit['id'] }}" method="POST">
-                <button type="submit">✅ Done</button>
+        {% if not user["is_pro"] %}
+            <div class="mb-4" style="font-size:0.9rem; color:#6e6e73;">
+                Free plan — <a href="/upgrade" style="color:#1d1d1f;">upgrade to Pro</a> for unlimited habits.
+            </div>
+        {% endif %}
+
+        {% if error %}
+            <div class="mb-4" style="font-size:0.9rem; color:#c00;">{{ error }}</div>
+        {% endif %}
+
+        {% for habit in habits %}
+            <div class="habit-card d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-weight:500;">{{ habit["name"] }}</div>
+                    <div class="streak">{{ habit["streak"] }} day streak</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <form action="/complete/{{ habit['id'] }}" method="POST">
+                        <button class="btn btn-outline-dark btn-sm">Done</button>
+                    </form>
+                    <form action="/delete/{{ habit['id'] }}" method="POST">
+                        <button class="btn btn-outline-dark btn-sm" style="color:#c00; border-color:#c00;">Delete</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="mt-5">
+            <form action="/create" method="POST" class="d-flex gap-2">
+                <input type="text" name="habit_name" placeholder="New habit" class="form-control" style="border-radius:20px;">
+                <button type="submit" class="btn btn-primary">Add</button>
             </form>
-            <form action="/delete/{{ habit['id'] }}" method="POST">
-                <button type="submit">❌ Delete</button>
-            </form>
-        </p>
-    {% endfor %}
-
-    <h2>Add a Habit</h2>
-    <form action="/create" method="POST">
-        <input type="text" name="habit_name" placeholder="Enter habit name">
-        <button type="submit">Add Habit</button>
-    </form>
-
-
-    
+        </div>
+    </div>
 </body>
 </html>
