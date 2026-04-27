@@ -34,6 +34,14 @@
     <p style="color:#c00; font-size:0.9rem;">{{ error }}</p>
 {% endif %}
 
+	{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color:#c00; font-size:0.9rem;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
         <form action="/login" method="POST">
             <div class="mb-3">
                 <input type="email" name="email" placeholder="Email" class="form-control">

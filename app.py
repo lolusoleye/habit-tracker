@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session,flash
 from database import get_db, init_db
 from datetime import date
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -49,7 +49,6 @@ def signup():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    error = None
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
@@ -59,9 +58,10 @@ def login():
         if user and check_password_hash(user["password"], password):
             session["user_id"] = user["id"]
             return redirect(url_for("home"))
-        return redirect(url_for("login", error="Invalid email or password"))
-    error = request.args.get("error")
-    return render_template("login.html", error=error)
+        flash("Invalid email or password")
+        return redirect(url_for("login"))
+    return render_template("login.html")
+
 @app.route("/logout")
 def logout():
     session.clear()
